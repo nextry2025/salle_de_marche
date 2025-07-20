@@ -1,0 +1,88 @@
+{% extends 'navbar.html' %}
+
+{% load static %}
+{% block content %}
+
+<div class="container-fluid pt-4 px-4">
+    <div class="row g-4">
+        <div class="col-sm-12 col-xl-12">
+            <div class="bg-light rounded h-100 p-4">
+                <!-- <h2 class="mb-4">Importation</h2> -->
+                {% if messages %}
+                {% for message in messages %}
+                {% if message.tags == 'success' %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <script>
+                    // Fermer l'alerte après 3 secondes
+                    setTimeout(function () {
+                        $('#success-alert').alert('close');
+                    }, 3000);
+                </script>
+                {% elif message.tags == 'error' %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert" id="error-alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <script>
+                    // Fermer l'alerte après 3 secondes
+                    setTimeout(function () {
+                        $('#error-alert').alert('close');
+                    }, 3000);
+                </script>
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+
+
+{% if session_status.is_open or user.is_staff %}
+<form action="{% url 'importer_donnes' %}" id="importForm" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+{% else %}
+<form>
+{% endif %}
+    {% csrf_token %}
+    <label for="fileInput" class="form-label me-2">Sélectionnez le fichier à importer :</label>
+    <div class="mb-3 d-flex align-items-center">
+      
+        <input class="form-control me-2" type="file" id="fileInput" name="fichier_excel" required> 
+        <input type="submit" id="submitForm" class="btn btn-primary btn-sm" value="Importer">
+    </div>
+    <div class="invalid-feedback">Veuillez sélectionner un fichier.</div>
+</form>
+
+
+<script>
+   document.getElementById('submitForm').addEventListener('click', function(e) {
+        var fileInput = document.getElementById('fileInput');
+
+        if (!fileInput.value) {
+            e.preventDefault(); 
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'La sélection de fichier est obligatoire!',
+            });
+        } else {
+            // Vérifiez l'extension du fichier
+            var filePath = fileInput.value;
+            var allowedExtensions = /(\.xlsx)$/i; // Expression régulière pour les extensions de fichier autorisées
+            
+            if (!allowedExtensions.exec(filePath)) {
+                e.preventDefault(); // Empêche l'envoi du formulaire si le fichier n'est pas un fichier Excel
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Le fichier doit être au format Excel (.xlsx)',
+                });
+            } else {
+                document.getElementById('importForm').submit();
+            }
+        }
+    });
+</script>
+
+
+                
+{% endblock content %}

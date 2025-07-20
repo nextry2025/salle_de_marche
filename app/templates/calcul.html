@@ -1,0 +1,167 @@
+  <!-- calcul.html -->
+{% extends 'navbar.html' %}
+{% load static %}
+{% load humanize %}
+
+
+{% block content %}
+<div class="container-fluid pt-4 px-4">
+    <div class="row g-4">
+        <div class="col-sm-12 col-xl-12">
+            <div class="bg-light rounded h-100 p-4">
+                <form class="row g-3" id="dateForm" method="get" action="{% url 'calcul' %}">
+                    <div class="col-auto">
+                      <input type="text" class="form-control" id="date_operation" name="date_operation" placeholder="Date">
+                      <span id="dateError" class="text-danger"></span> 
+                    </div>
+                    
+                    <div class="col-auto">
+                      <button type="submit" class="btn btn-primary mb-3">Valider</button>
+                    </div></form>
+                <div class="table-responsive">
+                    
+                    <table class="table_visualiser">
+                        <tr>
+                            <th>Devise</th>
+                            <th>Tot.Achat</th>
+                            <th>Tot.Vente</th>
+                            <th>PMPA</th>
+                            <th>PMPV</th>
+                            <th>C/V Achat</th>
+                            <th>C/V Vente</th>
+                            <!-- <th>Position Initiale</th>
+                            <th>Position Finale</th> -->
+
+                        </tr>
+                        <tbody>
+                           <tbody>
+                            <!-- Itération sur les totaux d'achat -->
+                            {% for achat in prix_achat_total %}
+                            <tr>
+                                <td>{{ achat.devise_achat | intcomma }}</td>
+                                <td>{{ achat.prix_achat_total | floatformat:"2" | intcomma }}</td>
+                                <!-- Recherche correspondance dans totaux de vente -->
+                                <td>
+                                    {% for vente in prix_vente_total %}
+                                        {% if vente.devise_vente == achat.devise_achat %}
+                                            {{ vente.prix_vente_total | floatformat:"2" | intcomma }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>{{ achat.prix_moyen_achat | floatformat:"2" | intcomma }}</td>
+                                <!-- Correspondant prix moyen vente -->
+                                <td>
+                                    {% for vente in prix_vente_total %}
+                                        {% if vente.devise_vente == achat.devise_achat %}
+                                            {{ vente.prix_moyen_vente | floatformat:"2" | intcomma }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>{{ achat.cv_achat | floatformat:"2" | intcomma }}</td>
+                                <!-- Correspondant coût/vente -->
+                                <td>
+                                    {% for vente in prix_vente_total %}
+                                        {% if vente.devise_vente == achat.devise_achat %}
+                                            {{ vente.cv_vente | floatformat:"2" | intcomma }}
+                                        {% endif %}
+                                    {% endfor %}
+                                <!-- </td>
+                                <td colspan="7">{{ position_initiale | floatformat:"2" | intcomma }}</td>
+                                <td colspan="7">{{ position_finale | floatformat:"2" | intcomma }}</td> -->
+
+                
+
+
+
+
+
+
+
+
+
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        </tbody>
+                    </table>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'meilleures_contreparties'%}" class="btn btn-primary btn-sm me-md-2">Meilleures Contreparties</a>
+                        <a href="#" id="exportBtn" class="btn btn-primary btn-sm">Exporter en Excel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById("exportBtn").onclick = function() {
+        var tableData = [];
+        var rows = document.querySelectorAll('.table_visualiser tr');
+        rows.forEach(function(row) {
+            var rowData = [];
+            row.querySelectorAll('td, th').forEach(function(cell) {
+                rowData.push(cell.innerText);
+            });
+            tableData.push(rowData);
+        });
+    
+        var csrftoken = getCookie('csrftoken');
+    
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "export_to_excel_reporting" %}';
+        form.style.display = 'none';
+    
+        var dataInput = document.createElement('input');
+        dataInput.type = 'hidden';
+        dataInput.name = 'tableData';
+        dataInput.value = JSON.stringify(tableData);
+        form.appendChild(dataInput);
+    
+        var csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrftoken;
+        form.appendChild(csrfInput);
+    
+        document.body.appendChild(form);
+        form.submit();
+    };
+    
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+<script>
+    document.getElementById("dateForm").onsubmit = function() {
+        var date_operation = document.getElementById("date_operation").value;
+    
+    
+        var isValidStartDate = /^\d{2}\/\d{2}\/\d{4}$/.test(date_operation);
+    
+        if (!isValidStartDate) {
+            document.getElementById("dateError").innerText = "Format de date incorrect. Utilisez le format DD/MM/YYYY.";
+            return false;
+        } else {
+            document.getElementById("dateError").innerText = "";
+        }
+    
+       
+    };
+    </script>
+    
+    
+{% endblock %}
